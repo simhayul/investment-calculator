@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Investment Goal Calculator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      width: 350px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+    }
+    label {
+      margin-bottom: 5px;
+    }
+    input {
+      margin-bottom: 15px;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      padding: 10px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    #result {
+      margin-top: 20px;
+      display: none;
+    }
+    #result p {
+      font-size: 16px;
+    }
+    .radio-group {
+      margin-bottom: 15px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Investment Goal Calculator</h1>
+    <form id="investment-form">
+      <label for="goal">Goal Amount ($):</label>
+      <input type="number" id="goal" required>
+
+      <div class="radio-group">
+        <label>
+          <input type="radio" name="investment-type" value="lump-sum" checked> Lump Sum (한 번에 투자)
+        </label>
+        <br>
+        <label>
+          <input type="radio" name="investment-type" value="monthly"> Monthly Investment (매달 투자)
+        </label>
+      </div>
+
+      <label for="rate">Annual Interest Rate (%):</label>
+      <input type="number" id="rate" required>
+
+      <label for="principal">Initial Investment Amount ($):</label>
+      <input type="number" id="principal" required>
+
+      <label for="monthly">Monthly Investment Amount ($):</label>
+      <input type="number" id="monthly" placeholder="Enter monthly amount" style="display: none;">
+
+      <button type="button" onclick="calculateInvestment()">Calculate</button>
+    </form>
+
+    <div id="result">
+      <h2>Result:</h2>
+      <p id="investment"></p>
+      <p id="months"></p>
+    </div>
+  </div>
+
+  <script>
+    // 투자 방식 선택에 따른 매달 투자 필드 표시 여부
+    document.querySelectorAll('input[name="investment-type"]').forEach((input) => {
+      input.addEventListener('change', function () {
+        if (this.value === 'monthly') {
+          document.getElementById('monthly').style.display = 'block';
+        } else {
+          document.getElementById('monthly').style.display = 'none';
+        }
+      });
+    });
+
+    // 투자 목표 달성 계산 함수
+    function calculateInvestment() {
+      var goal = parseFloat(document.getElementById("goal").value);
+      var rate = parseFloat(document.getElementById("rate").value);
+      var principal = parseFloat(document.getElementById("principal").value);
+      var investmentType = document.querySelector('input[name="investment-type"]:checked').value;
+      var monthly = investmentType === 'monthly' ? parseFloat(document.getElementById("monthly").value) : 0;
+
+      // 유효성 검사
+      if (isNaN(goal) || goal <= 0 || isNaN(rate) || rate <= 0 || isNaN(principal) || principal < 0 || 
+          (investmentType === 'monthly' && (isNaN(monthly) || monthly <= 0))) {
+        alert("Please enter valid positive numbers for all fields.");
+        return;
+      }
+
+      var totalAmount = 0;
+      var months = 0;
+      var years = 0;
+      var requiredInvestment = 0;
+
+      if (investmentType === 'lump-sum') {
+        // 한 번에 투자: A = P * (1 + r/100)^t
+        years = Math.log(goal / principal) / Math.log(1 + rate / 100);
+        totalAmount = principal * Math.pow(1 + rate / 100, years);
+        requiredInvestment = principal;
+
+      } else if (investmentType === 'monthly') {
+        // 매달 투자: 복리 계산 (매달 납입 방식)
+        var monthlyRate = rate / 100 / 12;
+        var monthsRequired = Math.log((goal * monthlyRate) / monthly + 1) / Math.log(1 + monthlyRate);
+        years = monthsRequired / 12;
+        months = Math.ceil(monthsRequired);
+
+        // 매달 투자할 경우 목표 달성 금액
+        totalAmount = principal * Math.pow(1 + monthlyRate, months) + monthly * ((Math.pow(1 + monthlyRate, months) - 1) / monthlyRate);
+        requiredInvestment = monthly * months + principal;
+      }
+
+      // 결과 출력
+      document.getElementById("investment").textContent = "Required Investment: $" + requiredInvestment.toFixed(2);
+      document.getElementById("months").textContent = "Time to Reach Goal: " + years.toFixed(2) + " years (" + months + " months)";
+
+      // 결과 섹션 보이기
+      document.getElementById("result").style.display = "block";
+    }
+  </script>
+</body>
+</html>
